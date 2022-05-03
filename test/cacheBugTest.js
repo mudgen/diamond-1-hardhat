@@ -7,6 +7,8 @@ const { FacetCutAction } = require('../scripts/libraries/diamond.js')
 
 const { assert } = require('chai')
 
+const hre = require('hardhat')
+
 // The diamond example comes with 8 function selectors
 // [cut, loupe, loupe, loupe, loupe, erc165, transferOwnership, owner]
 // This bug manifests if you delete something from the final
@@ -28,6 +30,8 @@ describe('Cache bug test', async () => {
   const sel8 = '0xcbb835f9' // fills up slot 2
   const sel9 = '0xcbb835fa' // fills up slot 2
   const sel10 = '0xcbb835fb' // fills up slot 2
+
+  const diamondGasLimit = Math.floor(800000 * hre.network.config.gasMultiplier)
 
   before(async function () {
     let tx
@@ -61,7 +65,7 @@ describe('Cache bug test', async () => {
         action: FacetCutAction.Add,
         functionSelectors: selectors
       }
-    ], ethers.constants.AddressZero, '0x', { gasLimit: 800000 })
+    ], ethers.constants.AddressZero, '0x', { gasLimit: diamondGasLimit })
     receipt = await tx.wait()
     if (!receipt.status) {
       throw Error(`Diamond upgrade failed: ${tx.hash}`)
@@ -80,7 +84,7 @@ describe('Cache bug test', async () => {
         action: FacetCutAction.Remove,
         functionSelectors: selectors
       }
-    ], ethers.constants.AddressZero, '0x', { gasLimit: 800000 })
+    ], ethers.constants.AddressZero, '0x', { gasLimit: diamondGasLimit })
     receipt = await tx.wait()
     if (!receipt.status) {
       throw Error(`Diamond upgrade failed: ${tx.hash}`)
