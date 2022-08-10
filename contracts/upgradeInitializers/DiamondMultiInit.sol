@@ -8,12 +8,12 @@ pragma solidity ^0.8.0;
 * Implementation of a diamond.
 /******************************************************************************/
 
-// This function provides a way to call multiple initialization functions from multiple
-// addresses for a single upgrade.
-
 import { LibDiamond } from "../libraries/LibDiamond.sol";
 
 contract DiamondMultiInit {    
+
+    // This function is provided in the third parameter of the `diamondCut` function.
+    // The `diamondCut` function executes this function to execute multiple initializer functions for a single upgrade.
 
     function multiInit(address[] calldata _addresses, bytes[] calldata _calldata) external {
         require(_addresses.length == _calldata.length, "Addresses and calldata length do not match.");
