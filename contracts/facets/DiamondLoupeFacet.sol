@@ -29,7 +29,7 @@ contract DiamondLoupeFacet is IDiamondLoupe, IERC165 {
         // create an array set to the maximum size possible
         facets_ = new Facet[](selectorCount);
         // create an array for counting the number of selectors for each facet
-        uint8[] memory numFacetSelectors = new uint8[](selectorCount);
+        uint16[] memory numFacetSelectors = new uint16[](selectorCount);
         // total number of facets
         uint256 numFacets;
         // loop through function selectors
@@ -40,9 +40,7 @@ contract DiamondLoupeFacet is IDiamondLoupe, IERC165 {
             // find the functionSelectors array for selector and add selector to it
             for (uint256 facetIndex; facetIndex < numFacets; facetIndex++) {
                 if (facets_[facetIndex].facetAddress == facetAddress_) {
-                    facets_[facetIndex].functionSelectors[numFacetSelectors[facetIndex]] = selector;
-                    // probably will never have more than 256 functions from one facet contract
-                    require(numFacetSelectors[facetIndex] < 255);
+                    facets_[facetIndex].functionSelectors[numFacetSelectors[facetIndex]] = selector;                                   
                     numFacetSelectors[facetIndex]++;
                     continueLoop = true;
                     break;
