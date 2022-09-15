@@ -189,8 +189,7 @@ library LibDiamond {
             } else {
                 revert InitializationFunctionReverted(_init, _calldata);
             }
-        }
-        
+        }        
     }
 
     function enforceHasContractCode(address _contract, string memory _errorMessage) internal view {
