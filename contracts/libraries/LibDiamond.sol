@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 * Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
 * EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
 /******************************************************************************/
+import { IDiamond } from "../interfaces/IDiamond.sol";
 import { IDiamondCut } from "../interfaces/IDiamondCut.sol";
 
 // Remember to add the loupe functions from DiamondLoupeFacet to the diamond.
@@ -84,11 +85,11 @@ library LibDiamond {
                 revert NoSelectorsProvidedForFacetForCut(facetAddress);
             }
             IDiamondCut.FacetCutAction action = _diamondCut[facetIndex].action;
-            if (action == IDiamondCut.FacetCutAction.Add) {
+            if (action == IDiamond.FacetCutAction.Add) {
                 addFunctions(facetAddress, functionSelectors);
-            } else if (action == IDiamondCut.FacetCutAction.Replace) {
+            } else if (action == IDiamond.FacetCutAction.Replace) {
                 replaceFunctions(facetAddress, functionSelectors);
-            } else if (action == IDiamondCut.FacetCutAction.Remove) {
+            } else if (action == IDiamond.FacetCutAction.Remove) {
                 removeFunctions(facetAddress, functionSelectors);
             } else {
                 revert IncorrectFacetCutAction(uint8(action));
