@@ -12,7 +12,14 @@ import { LibDiamond } from "../libraries/LibDiamond.sol";
 
 error AddressAndCalldataLengthDoNotMatch(uint256 _addressesLength, uint256 _calldataLength);
 
-contract DiamondMultiInit {    
+
+// This Solidity library is deployed because it contains an external function.
+// This is deployed as a Solidity library instead of as regular contract because deployed Solidity libraries 
+// cannot be deleted. If this was a contract then someone could call multiInit directly on the contract
+// with a regular external function call in order to delegatecall (via LibDiamond.initializeDiamondCut) 
+// to a function that executes self destruct.
+
+library DiamondMultiInit {    
 
     // This function is provided in the third parameter of the `diamondCut` function.
     // The `diamondCut` function executes this function to execute multiple initializer functions for a single upgrade.
