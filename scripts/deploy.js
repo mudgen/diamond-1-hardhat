@@ -3,7 +3,7 @@
 
 const { getSelectors, FacetCutAction } = require('./libraries/diamond.js')
 
-async function deployDiamond () {
+async function deployDiamond() {
   const accounts = await ethers.getSigners()
   const contractOwner = accounts[0]
 
@@ -55,6 +55,32 @@ async function deployDiamond () {
   await diamond.deployed()
   console.log()
   console.log('Diamond deployed:', diamond.address)
+
+  let diamondAddress = diamond.address
+  let diamondCutFacet = await ethers.getContractAt('DiamondCutFacet', diamondAddress)
+  let diamondLoupeFacet = await ethers.getContractAt('DiamondLoupeFacet', diamondAddress)
+  const NestableFacet = await ethers.getContractFactory('RMRKNestableFacet')
+  nestableFacet = await NestableFacet.deploy("RMRK", "RMRK")
+  await nestableFacet.deployed()
+
+  const NestableFacetInit = await ethers.getContractFactory('RMRKNestableFacetInit')
+  const nestableFacetInit = await NestableFacetInit.deploy()
+  await nestableFacetInit.deployed()
+
+  let nestableInitCalldata = nestableFacetInit.interface.encodeFunctionData('init')
+
+  // add functions
+  tx = await diamondCutFacet.diamondCut([
+    {
+      facetAddress: nestableFacet.address,
+      action: FacetCutAction.Add,
+      functionSelectors: getSelectors(nestableFacet)
+    }
+  ], nestableFacetInit.address, nestableInitCalldata, { gasLimit: 800000 })
+  receipt = await tx.wait()
+  if (!receipt.status) {
+    throw Error(`Diamond upgrade failed: ${tx.hash}`)
+  }
 
   // returning the address of the diamond
   return diamond.address

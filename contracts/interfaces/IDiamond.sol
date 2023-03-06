@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.16;
 
 /******************************************************************************\
 * Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
@@ -7,7 +7,11 @@ pragma solidity ^0.8.0;
 /******************************************************************************/
 
 interface IDiamond {
-    enum FacetCutAction {Add, Replace, Remove}
+    enum FacetCutAction {
+        Add,
+        Replace,
+        Remove
+    }
     // Add=0, Replace=1, Remove=2
 
     struct FacetCut {
