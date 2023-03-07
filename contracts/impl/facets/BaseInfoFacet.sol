@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: Apache-2.0
+
+//Generally all interactions should propagate downstream
+
+pragma solidity ^0.8.16;
+import {Modifiers} from "../../storage/LibAppStorage.sol";
+
+contract BaseInfoFacet is Modifiers {
+
+    /**
+     * @notice Used to retrieve the collection name.
+     * @return string Name of the collection
+     */
+    function name() public view returns (string memory) {
+        return s._name;
+    }
+
+    /**
+     * @notice Used to retrieve the collection symbol.
+     * @return string Symbol of the collection
+     */
+    function symbol() public view returns (string memory) {
+        return s._symbol;
+    }
+}

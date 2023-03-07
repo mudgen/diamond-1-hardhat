@@ -19,6 +19,14 @@ import "../libraries/LibRMRKNestable.sol";
  * Common storage for diamond project
  */
 struct AppStorage {
+
+    // base info
+    /// Token name
+    string _name;
+
+    /// Token symbol
+    string _symbol;
+
     // Mapping owner address to token count
     mapping(address => uint256) _balances;
     // Mapping from token ID to approver address to approved address
