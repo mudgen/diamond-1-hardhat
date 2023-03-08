@@ -7,8 +7,10 @@ contract RMRKNestableFacetInit {
     /**
      * init setup for RMRKNestable Facet plugin
      */
-    function init() public {
+    function init(string memory name, string memory symbol) public {
         AppStorage storage s = LibAppStorage.diamondStorage();
-        unchecked {}
+
+        s._name = name;
+        s._symbol = symbol;
     }
 }
