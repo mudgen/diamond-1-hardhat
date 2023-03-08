@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import {LibDiamond} from "../libraries/LibDiamond.sol";
+import { LibMeta } from "../impl/libs/LibMeta.sol";
 import "../libraries/LibRMRKNestable.sol";
 
 /*
@@ -75,6 +76,16 @@ contract Modifiers {
      */
     modifier onlyOwner() {
         LibDiamond.enforceIsContractOwner();
+        _;
+    }
+    
+    /**
+     * Decoration: should check if the current operator is the owner of the token or is approved to operate the token
+     */
+    modifier onlyApprovedOrOwner(uint256 tokenId) {
+        address owner = s._RMRKOwners[tokenId].ownerAddress;
+        address from = LibMeta._msgSender();
+        require(owner == from || s._operatorApprovals[owner][from] || s._tokenApprovals[tokenId][owner] == from);
         _;
     }
 }

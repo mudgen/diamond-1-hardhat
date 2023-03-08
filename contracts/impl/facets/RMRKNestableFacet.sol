@@ -38,15 +38,6 @@ contract RMRKNestableFacet is Modifiers {
         if (!_isApprovedOrOwner(LibMeta._msgSender(), tokenId)) revert ERC721NotApprovedOrOwner();
     }
 
-    /**
-     * @notice Used to verify that the caller is either the owner of the token or approved to manage it by its owner.
-     * @param tokenId ID of the token to check
-     */
-    modifier onlyApprovedOrOwner(uint256 tokenId) {
-        _onlyApprovedOrOwner(tokenId);
-        _;
-    }
-
     // ------------------------------- ERC721 ---------------------------------
     // /**
     //  * @inheritdoc IERC165
