@@ -4,17 +4,16 @@
 
 pragma solidity ^0.8.16;
 
-import "./IRMRKNestable.sol";
+import "../../interfaces/IRMRKNestable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "../libs/RMRKErrors.sol";
 import {Modifiers} from "../../storage/LibAppStorage.sol";
 import {LibERC721} from "../../libraries/LibERC721.sol";
 import { LibNestable } from "../libs/LibNestable.sol";
 import { LibOwnership } from "../libs/LibOwnership.sol";
-import { LibMeta } from "../libs/LibMeta.sol";
+import { LibMeta } from "../../shared/LibMeta.sol";
+import "../../shared/RMRKErrors.sol";
 
 /**
  * @title RMRKNestable
@@ -26,29 +25,7 @@ import { LibMeta } from "../libs/LibMeta.sol";
 contract RMRKNestableFacet is Modifiers {
     using Address for address;
 
-    // -------------------------- MODIFIERS ----------------------------
-
-    /**
-     * @notice Used to verify that the caller is either the owner of the token or approved to manage it by its owner.
-     * @dev If the caller is not the owner of the token or approved to manage it by its owner, the execution will be
-     *  reverted.
-     * @param tokenId ID of the token to check
-     */
-    function _onlyApprovedOrOwner(uint256 tokenId) private view {
-        if (!_isApprovedOrOwner(LibMeta._msgSender(), tokenId)) revert ERC721NotApprovedOrOwner();
-    }
-
     // ------------------------------- ERC721 ---------------------------------
-    // /**
-    //  * @inheritdoc IERC165
-    // //  */
-    // function supportsInterface(bytes4 interfaceId) public view  returns (bool) {
-    //     return
-    //         interfaceId == type(IERC165).interfaceId ||
-    //         interfaceId == type(IERC721).interfaceId ||
-    //         interfaceId == type(IERC721Metadata).interfaceId ||
-    //         interfaceId == type(IRMRKNestable).interfaceId;
-    // }
 
     function balanceOf(address owner) public view returns (uint256) {
         if (owner == address(0)) revert ERC721AddressZeroIsNotaValidOwner();
@@ -56,276 +33,13 @@ contract RMRKNestableFacet is Modifiers {
     }
 
     ////////////////////////////////////////
-    //              TRANSFERS
+    //              Ownership
     ////////////////////////////////////////
 
-    function transferFrom(address from, address to, uint256 tokenId) public onlyApprovedOrOwner(tokenId) {
-        _transfer(from, to, tokenId, "");
-    }
-
-    function safeTransferFrom(address from, address to, uint256 tokenId) public  {
-        safeTransferFrom(from, to, tokenId, "");
-    }
-
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public onlyApprovedOrOwner(tokenId) {
-        _safeTransfer(from, to, tokenId, data);
-    }
-
-    /**
-     * @notice Used to safely transfer the token form `from` to `to`.
-     * @dev The function checks that contract recipients are aware of the ERC721 protocol to prevent tokens from being
-     *  forever locked.
-     * @dev This internal function is equivalent to {safeTransferFrom}, and can be used to e.g. implement alternative
-     *  mechanisms to perform token transfer, such as signature-based.
-     * @dev Requirements:
-     *
-     *  - `from` cannot be the zero address.
-     *  - `to` cannot be the zero address.
-     *  - `tokenId` token must exist and be owned by `from`.
-     *  - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
-     * @dev Emits a {Transfer} event.
-     * @param from Address of the account currently owning the given token
-     * @param to Address to transfer the token to
-     * @param tokenId ID of the token to transfer
-     * @param data Additional data with no specified format, sent in call to `to`
-     */
-    function _safeTransfer(address from, address to, uint256 tokenId, bytes memory data) internal  {
-        _transfer(from, to, tokenId, data);
-        if (!_checkOnERC721Received(from, to, tokenId, data)) revert ERC721TransferToNonReceiverImplementer();
-    }
-
-    /**
-     * @notice Used to transfer the token from `from` to `to`.
-     * @dev As opposed to {transferFrom}, this imposes no restrictions on msg.sender.
-     * @dev Requirements:
-     *
-     *  - `to` cannot be the zero address.
-     *  - `tokenId` token must be owned by `from`.
-     * @dev Emits a {Transfer} event.
-     * @param from Address of the account currently owning the given token
-     * @param to Address to transfer the token to
-     * @param tokenId ID of the token to transfer
-     * @param data Additional data with no specified format, sent in call to `to`
-     */
-    function _transfer(address from, address to, uint256 tokenId, bytes memory data) internal  {
-        // only owner of will solve the minting & transfer here
-        address owner = LibOwnership.ownerOf(tokenId);
-        if (owner != from) revert ERC721TransferFromIncorrectOwner();
-        if (to == address(0)) revert ERC721TransferToTheZeroAddress();
-
-        s._balances[from] -= 1;
-        _updateOwnerAndClearApprovals(tokenId, 0, to, false);
-        s._balances[to] += 1;
-
-        emit LibERC721.Transfer(from, to, tokenId);
-    }
-
-
-    ////////////////////////////////////////
-    //              MINTING
-    ////////////////////////////////////////
-
-    /**
-     * @notice Used to safely mint the token to the specified address while passing the additional data to contract
-     *  recipients.
-     * @param to Address to which to mint the token
-     * @param tokenId ID of the token to mint
-     * @param data Additional data to send with the tokens
-     */
-    function _safeMint(address to, uint256 tokenId, bytes memory data) internal  {
-        _mint(to, tokenId, data);
-        if (!_checkOnERC721Received(address(0), to, tokenId, data)) revert ERC721TransferToNonReceiverImplementer();
-    }
-
-    /**
-     * @notice Used to mint a specified token to a given address.
-     * @dev WARNING: Usage of this method is discouraged, use {_safeMint} whenever possible.
-     * @dev Requirements:
-     *
-     *  - `tokenId` must not exist.
-     *  - `to` cannot be the zero address.
-     * @dev Emits a {Transfer} event.
-     * @param to Address to mint the token to
-     * @param tokenId ID of the token to mint
-     * @param data Additional data with no specified format, sent in call to `to`
-     */
-    function _mint(address to, uint256 tokenId, bytes memory data) internal  {
-        _innerMint(to, tokenId, 0, data);
-
-        emit LibERC721.Transfer(address(0), to, tokenId);
-        emit LibNestable.NestTransfer(address(0), to, 0, 0, tokenId);
-    }
-
-    /**
-     * @notice Used to mint a child token into a given parent token.
-     * @dev Requirements:
-     *
-     *  - `to` cannot be the zero address.
-     *  - `tokenId` must not exist.
-     *  - `tokenId` must not be `0`.
-     * @param to Address of the collection smart contract of the token into which to mint the child token
-     * @param tokenId ID of the token to mint
-     * @param destinationId ID of the token into which to mint the new token
-     * @param data Additional data with no specified format, sent in call to `to`
-     */
-    function _innerMint(address to, uint256 tokenId, uint256 destinationId, bytes memory data) private {
-        if (to == address(0)) revert ERC721MintToTheZeroAddress();
-        if (LibNestable._exists(tokenId)) revert ERC721TokenAlreadyMinted();
-        if (tokenId == 0) revert RMRKIdZeroForbidden();
-
-        s._balances[to] += 1;
-        s._RMRKOwners[tokenId] = DirectOwner({ownerAddress: to, tokenId: destinationId, isNft: destinationId != 0});
-    }
-
-    ////////////////////////////////////////
-    //              BURNING
-    ////////////////////////////////////////
-
-    /**
-     * @notice Used to burn a given token.
-     * @dev In case the token has any child tokens, the execution will be reverted.
-     * @param tokenId ID of the token to burn
-     */
-    function burn(uint256 tokenId) public  {
-        burn(tokenId, 0);
-    }
-
-    /**
-     * burn this token id with it children
-     * @param tokenId               the token needing for burning
-     * @param maxChildrenBurns      max number of children that can be burnt in this process
-     * @return num                  number of total burns 
-     */
-    function burn(uint256 tokenId, uint256 maxChildrenBurns) public onlyApprovedOrOwner(tokenId) returns (uint256) {
-        return _burn(tokenId, maxChildrenBurns);
-    }
-
-    /**
-     * @notice Used to burn a token.
-     * @dev When a token is burned, its children are recursively burned as well.
-     * @dev The approvals are cleared when the token is burned.
-     * @dev Requirements:
-     *
-     *  - `tokenId` must exist.
-     * @dev Emits a {Transfer} event.
-     * @dev Emits a {NestTransfer} event.
-     * @param tokenId ID of the token to burn
-     * @param maxChildrenBurns Maximum children to recursively burn
-     * @return uint256 The number of recursive burns it took to burn all of the children
-     */
-    function _burn(uint256 tokenId, uint256 maxChildrenBurns) internal  returns (uint256) {
-        address owner = LibOwnership.ownerOf(tokenId);
-        s._balances[owner] -= 1;
-
-        LibOwnership._approve(address(0), tokenId);
-        _cleanApprovals(tokenId);
-
-        Child[] memory children = childrenOf(tokenId);
-
-        delete s._activeChildren[tokenId];
-        delete s._pendingChildren[tokenId];
-        delete s._tokenApprovals[tokenId][owner];
-
-        uint256 pendingRecursiveBurns;
-        uint256 totalChildBurns;
-
-        uint256 length = children.length; //gas savings
-        for (uint256 i; i < length; ) {
-            if (totalChildBurns >= maxChildrenBurns) revert RMRKMaxRecursiveBurnsReached(children[i].contractAddress, children[i].tokenId);
-            delete s._childIsInActive[children[i].contractAddress][children[i].tokenId];
-            unchecked {
-                // At this point we know pendingRecursiveBurns must be at least 1
-                pendingRecursiveBurns = maxChildrenBurns - totalChildBurns;
-            }
-            // We substract one to the next level to count for the token being burned, then add it again on returns
-            // This is to allow the behavior of 0 recursive burns meaning only the current token is deleted.
-            totalChildBurns += IRMRKNestable(children[i].contractAddress).burn(children[i].tokenId, pendingRecursiveBurns - 1) + 1;
-            unchecked {
-                ++i;
-            }
-        }
-        // Can't remove before burning child since child will call back to get root owner
-        delete s._RMRKOwners[tokenId];
-
-        emit LibERC721.Transfer(owner, address(0), tokenId);
-
-        return totalChildBurns;
-    }
-
-
-    // function setApprovalForAll(address operator, bool approved) public  {
-    //     if (_msgSender() == operator) revert ERC721ApproveToCaller();
-    //     s._operatorApprovals[_msgSender()][operator] = approved;
-    //     emit LibERC721.ApprovalForAll(_msgSender(), operator, approved);
-    // }
-
-    /**
-     * @notice Used to update the owner of the token and clear the approvals associated with the previous owner.
-     * @dev The `destinationId` should equal `0` if the new owner is an externally owned account.
-     * @param tokenId ID of the token being updated
-     * @param destinationId ID of the token to receive the given token
-     * @param to Address of account to receive the token
-     * @param isNft A boolean value signifying whether the new owner is a token (`true`) or externally owned account
-     *  (`false`)
-     */
-    function _updateOwnerAndClearApprovals(uint256 tokenId, uint256 destinationId, address to, bool isNft) internal {
-        s._RMRKOwners[tokenId] = DirectOwner({ownerAddress: to, tokenId: destinationId, isNft: isNft});
-
-        // Clear approvals from the previous owner
-        LibOwnership._approve(address(0), tokenId);
-        _cleanApprovals(tokenId);
-    }
-
-    /**
-     * @notice Used to remove approvals for the current owner of the given token.
-     * @param tokenId ID of the token to clear the approvals for
-     */
-    function _cleanApprovals(uint256 tokenId) internal  {}
-
-    ////////////////////////////////////////
-    //              UTILS
-    ////////////////////////////////////////
-
-    /**
-     * @notice Used to check whether the given account is allowed to manage the given token.
-     * @dev Requirements:
-     *
-     *  - `tokenId` must exist.
-     * @param spender Address that is being checked for approval
-     * @param tokenId ID of the token being checked
-     * @return bool The boolean value indicating whether the `spender` is approved to manage the given token
-     */
-    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view  returns (bool) {
-        address owner = LibOwnership.ownerOf(tokenId);
-        return (spender == owner || LibOwnership.isApprovedForAll(owner, spender) || LibOwnership.getApproved(tokenId) == spender);
-    }
-
-    /**
-     * @notice Used to invoke {IERC721Receiver-onERC721Received} on a target address.
-     * @dev The call is not executed if the target address is not a contract.
-     * @param from Address representing the previous owner of the given token
-     * @param to Yarget address that will receive the tokens
-     * @param tokenId ID of the token to be transferred
-     * @param data Optional data to send along with the call
-     * @return Boolean value signifying whether the call correctly returned the expected magic value
-     */
-    function _checkOnERC721Received(address from, address to, uint256 tokenId, bytes memory data) private returns (bool) {
-        if (to.isContract()) {
-            try IERC721Receiver(to).onERC721Received(LibMeta._msgSender(), from, tokenId, data) returns (bytes4 retval) {
-                return retval == IERC721Receiver.onERC721Received.selector;
-            } catch (bytes memory reason) {
-                if (reason.length == 0) {
-                    revert ERC721TransferToNonReceiverImplementer();
-                } else {
-                    /// @solidity memory-safe-assembly
-                    assembly {
-                        revert(add(32, reason), mload(reason))
-                    }
-                }
-            }
-        } else {
-            return true;
-        }
+    function ownerOf(
+        uint256 tokenId
+    ) public view returns (address) {
+        return LibOwnership.ownerOf(tokenId);
     }
 
     ////////////////////////////////////////

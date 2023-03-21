@@ -75,6 +75,6 @@ library LibNestable {
      */
     function _exists(uint256 tokenId) internal view  returns (bool) {
         AppStorage storage s = LibAppStorage.diamondStorage();
-        return s._RMRKOwners[tokenId].ownerAddress != address(0);
+        return s.owner[tokenId] != address(0);
     }
 }

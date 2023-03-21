@@ -13,4 +13,8 @@ library LibMeta {
     function _msgData() internal pure returns (bytes calldata) {
         return msg.data;
     }
+
+    function _msgValue() internal view returns (uint256) {
+        return msg.value;
+    }
 }

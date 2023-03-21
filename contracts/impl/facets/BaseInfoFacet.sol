@@ -22,4 +22,12 @@ contract BaseInfoFacet is Modifiers {
     function symbol() public view returns (string memory) {
         return s._symbol;
     }
+
+    /**
+     * @notice Used to retrieve the maximum supply of the collection.
+     * @return The maximum supply of tokens in the collection
+     */
+    function maxSupply() public view returns (uint256) {
+        return s._maxSupply;
+    }
 }

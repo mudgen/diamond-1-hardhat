@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.16;
 
-import "../../libraries/LibRMRKNestable.sol";
+import "../libraries/LibRMRKNestable.sol";
 
 /**
  * @title IRMRKNestable

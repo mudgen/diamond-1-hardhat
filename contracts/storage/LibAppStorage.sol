@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 
 import {LibDiamond} from "../libraries/LibDiamond.sol";
-import { LibMeta } from "../impl/libs/LibMeta.sol";
+import { LibMeta } from "../shared/LibMeta.sol";
 import "../libraries/LibRMRKNestable.sol";
 
 /*
@@ -28,6 +28,27 @@ struct AppStorage {
     /// Token symbol
     string _symbol;
 
+    // collection meta
+    string _collectionMeta;
+
+    // token URI
+    string _tokenURI;
+
+    // price per mint
+    uint256 _pricePerMint;
+
+    // max supply
+    uint256 _maxSupply;
+
+    // current num of minted token
+    uint256 _totalSupply;
+
+    // royalty receipient address
+    address _royaltyRecipient;
+
+    // royalty percentage bps
+    uint256 _royaltyPercentageBps;
+
     // Mapping owner address to token count
     mapping(address => uint256) _balances;
     // Mapping from token ID to approver address to approved address
@@ -39,7 +60,7 @@ struct AppStorage {
     // ------------------- NESTABLE --------------
 
     // Mapping from token ID to DirectOwner struct
-    mapping(uint256 => DirectOwner) _RMRKOwners;
+    mapping(uint256 => address) owner;
     // Mapping of tokenId to array of active children structs
     mapping(uint256 => Child[]) _activeChildren;
     // Mapping of tokenId to array of pending children structs
@@ -83,7 +104,7 @@ contract Modifiers {
      * Decoration: should check if the current operator is the owner of the token or is approved to operate the token
      */
     modifier onlyApprovedOrOwner(uint256 tokenId) {
-        address owner = s._RMRKOwners[tokenId].ownerAddress;
+        address owner = s.owner[tokenId];
         address from = LibMeta._msgSender();
         require(owner == from || s._operatorApprovals[owner][from] || s._tokenApprovals[tokenId][owner] == from);
         _;

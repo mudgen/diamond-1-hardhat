@@ -1,11 +1,13 @@
 /* global ethers */
 /* eslint prefer-const: "off" */
 
+const { ethers } = require('hardhat')
 const { getSelectors, FacetCutAction } = require('./libraries/diamond.js')
 
 async function deployDiamond() {
   const accounts = await ethers.getSigners()
   const contractOwner = accounts[0]
+  const contractOwnerAddress = await contractOwner.getAddress()
 
   // Deploy DiamondInit
   // DiamondInit provides a function that is called when the diamond is upgraded or deployed to initialize state variables
@@ -59,28 +61,149 @@ async function deployDiamond() {
   let diamondAddress = diamond.address
   let diamondCutFacet = await ethers.getContractAt('DiamondCutFacet', diamondAddress)
   let diamondLoupeFacet = await ethers.getContractAt('DiamondLoupeFacet', diamondAddress)
-  const NestableFacet = await ethers.getContractFactory('RMRKNestableFacet')
-  nestableFacet = await NestableFacet.deploy("RMRK", "RMRK")
-  await nestableFacet.deployed()
 
-  const NestableFacetInit = await ethers.getContractFactory('RMRKNestableFacetInit')
-  const nestableFacetInit = await NestableFacetInit.deploy()
-  await nestableFacetInit.deployed()
+  // deploying baseInfo facet
+  console.log("start to deploy Base info facet")
+  const BaseInfoFacet = await ethers.getContractFactory('BaseInfoFacet')
+  let baseInfoFacet = await BaseInfoFacet.deploy()
+  await baseInfoFacet.deployed()
 
-  let nestableInitCalldata = nestableFacetInit.interface.encodeFunctionData('init')
+  const BaseInfoInit = await ethers.getContractFactory('RMRKNestableFacetInit')
+  let baseInfoInit = await BaseInfoInit.deploy()
+  await baseInfoInit.deployed()
 
-  // add functions
-  tx = await diamondCutFacet.diamondCut([
-    {
-      facetAddress: nestableFacet.address,
+  const baseInfoSelectors = getSelectors(baseInfoFacet)
+  let baseInfoCalldata = baseInfoInit.interface.encodeFunctionData('init', ['NAIN NFT', 'NAIN'])
+  tx = await diamondCutFacet.diamondCut(
+    [{
+      facetAddress: baseInfoFacet.address,
       action: FacetCutAction.Add,
-      functionSelectors: getSelectors(nestableFacet)
-    }
-  ], nestableFacetInit.address, nestableInitCalldata, { gasLimit: 800000 })
+      functionSelectors: baseInfoSelectors
+    }],
+    baseInfoInit.address, baseInfoCalldata, { gasLimit: 800000 })
   receipt = await tx.wait()
   if (!receipt.status) {
     throw Error(`Diamond upgrade failed: ${tx.hash}`)
   }
+  console.log('deployed base info facet')
+
+  // deploying collection meta info facet
+  console.log('start to deploy collection meta info facet')
+
+  const CollectionMetaFacet = await ethers.getContractFactory("CollectionMetaFacet")
+  let collectionMetaFacet = await CollectionMetaFacet.deploy()
+  await collectionMetaFacet.deployed()
+
+  const CollectionMetaFacetInit = await ethers.getContractFactory("CollectionMetaFacetInit")
+  let collectionMetaFacetInit = await CollectionMetaFacetInit.deploy()
+  await collectionMetaFacetInit.deployed()
+
+  const collectionMetaFacetSelectors = getSelectors(collectionMetaFacet)
+  let collectionMetaCalldata = collectionMetaFacetInit.interface.encodeFunctionData('init', ['https://project-oracle-test.mypinata.cloud/ipfs/bafkreihnix2zvskkwdkxb2icb43j42f6yflc5kdotrmzdmk6nlqmqxjwma', 'https://project-oracle-test.mypinata.cloud/ipfs/QmRxFwKofDa8hebvQMXT8eU8xzck35gN9aRrY75H5eoDiz/'])
+  tx = await diamondCutFacet.diamondCut(
+    [{
+      facetAddress: collectionMetaFacet.address,
+      action: FacetCutAction.Add,
+      functionSelectors: collectionMetaFacetSelectors
+    }],
+    collectionMetaFacetInit.address, collectionMetaCalldata, { gasLimit: 800000 })
+  receipt = await tx.wait()
+  if (!receipt.status) {
+    throw Error(`Diamond upgrade failed: ${tx.hash}`)
+  }  
+  console.log('deployed collection metadata facet')
+
+  // deploying RMRK mint & burn facet
+  console.log('deploying RMRK mint & burn facet')
+  const MintAndBurnFacet = await ethers.getContractFactory("RMRKMintAndBurnFacet")
+  const mintAndBurnFacet = await MintAndBurnFacet.deploy()
+  await mintAndBurnFacet.deployed()
+
+  const MintAndBurnInit = await ethers.getContractFactory("MintAndBurnFacetInit")
+  let mintAndBurnInit = await MintAndBurnInit.deploy()
+  await mintAndBurnInit.deployed()
+
+  const mintAndBurnFacetSelectors = getSelectors(mintAndBurnFacet)
+  const pricePerMint = ethers.utils.parseUnits("0.01","ether");
+  let mintAndBurnCalldata = mintAndBurnInit.interface.encodeFunctionData('init', [999, pricePerMint])
+  tx = await diamondCutFacet.diamondCut(
+    [{
+      facetAddress: mintAndBurnFacet.address,
+      action: FacetCutAction.Add,
+      functionSelectors: mintAndBurnFacetSelectors
+    }],
+    mintAndBurnInit.address, mintAndBurnCalldata, { gasLimit: 800000 })
+  receipt = await tx.wait()
+  if (!receipt.status) {
+    throw Error(`Diamond upgrade failed: ${tx.hash}`)
+  }  
+  console.log('deployed RMRK mint & burn facet')
+
+  // deploy RMRK nestable facet
+  console.log('deploying RMRK nestable facet')
+  const RMRKNestableFacet = await ethers.getContractFactory("RMRKNestableFacet")
+  const rmrkNestableFacet = await RMRKNestableFacet.deploy()
+  await rmrkNestableFacet.deployed()
+
+  const rmrkNestableFacetSelectors = getSelectors(rmrkNestableFacet)
+  tx = await diamondCutFacet.diamondCut(
+    [{
+      facetAddress: rmrkNestableFacet.address,
+      action: FacetCutAction.Add,
+      functionSelectors: rmrkNestableFacetSelectors
+    }],
+    ethers.constants.AddressZero, '0x', { gasLimit: 800000 })
+  receipt = await tx.wait()
+  if (!receipt.status) {
+    throw Error(`Diamond upgrade failed: ${tx.hash}`)
+  }  
+  console.log('deployed RMRK nestable facet!')
+
+  // deploy RMRK transfer facet
+  console.log('deploying RMRK transfer facet...')
+  const RMRKTransferFacet = await ethers.getContractFactory('RMRKTransferFacet')
+  const rmrkTransferFacet = await RMRKTransferFacet.deploy()
+  await rmrkTransferFacet.deployed()
+
+  const rmrkTransferFacetSelectors = getSelectors(rmrkTransferFacet)
+  tx = await diamondCutFacet.diamondCut(
+    [{
+      facetAddress: rmrkTransferFacet.address,
+      action: FacetCutAction.Add,
+      functionSelectors: rmrkTransferFacetSelectors
+    }],
+    ethers.constants.AddressZero, '0x', { gasLimit: 800000 })
+  receipt = await tx.wait()
+  if (!receipt.status) {
+    throw Error(`Diamond upgrade failed: ${tx.hash}`)
+  }  
+  console.log('deployed RMRK transfer facet!')
+
+  // deploy Royalty info facet
+  console.log('deploying RMRK royalty info facet...')
+  const RoyaltyInfoFacet = await ethers.getContractFactory('RoyaltyInfoFacet')
+  const royaltyInfoFacet = await RoyaltyInfoFacet.deploy()
+  await royaltyInfoFacet.deployed()
+
+  const RoyaltyFacetInit = await ethers.getContractFactory("RoyaltyInfoFacetInit")
+  let royaltyFacetInit = await RoyaltyFacetInit.deploy()
+  await royaltyFacetInit.deployed()
+
+  const royaltyInfoFacetSelectors = getSelectors(royaltyInfoFacet)
+  let royaltyInfoInitCallData = royaltyFacetInit.interface.encodeFunctionData('init', [contractOwnerAddress, 2])
+  tx = await diamondCutFacet.diamondCut(
+    [{
+      facetAddress: royaltyInfoFacet.address,
+      action: FacetCutAction.Add,
+      functionSelectors: royaltyInfoFacetSelectors
+    }],
+    royaltyFacetInit.address, royaltyInfoInitCallData, { gasLimit: 800000 })
+  receipt = await tx.wait()
+  if (!receipt.status) {
+    throw Error(`Diamond upgrade failed: ${tx.hash}`)
+  }  
+  console.log('deployed RMRK royalty info facet!')
+
 
   // returning the address of the diamond
   return diamond.address
