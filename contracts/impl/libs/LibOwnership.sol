@@ -3,7 +3,7 @@
 pragma solidity ^0.8.16;
 
 import { LibAppStorage, AppStorage } from "../../storage/LibAppStorage.sol";
-import { LibMeta } from "./LibMeta.sol"; 
+import { LibMeta } from "../../shared/LibMeta.sol";
 import {LibERC721} from "../../libraries/LibERC721.sol";
 import {LibNestable} from "./LibNestable.sol";
 
@@ -18,10 +18,10 @@ library LibOwnership {
      * @param tokenId:  token id in query
      * @return          owner address of this token
      */ 
-    function ownerOf(uint256 tokenId) public view returns (address) {
+    function ownerOf(uint256 tokenId) internal view returns (address) {
         AppStorage storage s = LibAppStorage.diamondStorage();
         // change: the Nain NFT should only implement `ownerOf` method, since there will be no parent NFT above it
-        return s._RMRKOwners[tokenId].ownerAddress;
+        return s.owner[tokenId];
     }
 
     // No `directOwnerOf` method ANY MORE
@@ -40,7 +40,7 @@ library LibOwnership {
     //              APPROVALS
     ////////////////////////////////////////
 
-    function approve(address to, uint256 tokenId) public  {
+    function approve(address to, uint256 tokenId) internal  {
         address owner = ownerOf(tokenId);
         require(to != owner, "Cannot approve to current owner!");
         require(LibMeta._msgSender() == owner || isApprovedForAll(owner, LibMeta._msgSender()), "approve caller is not owner nor approved for all");
@@ -63,25 +63,16 @@ library LibOwnership {
         emit LibERC721.Approval(owner, to, tokenId);
     }
 
-    function isApprovedForAll(address owner, address operator) public view  returns (bool) {
+    function isApprovedForAll(address owner, address operator) internal view  returns (bool) {
         AppStorage storage s = LibAppStorage.diamondStorage();
         return s._operatorApprovals[owner][operator];
     }
 
-    function getApproved(uint256 tokenId) public view  returns (address) {
+    function getApproved(uint256 tokenId) internal view  returns (address) {
         AppStorage storage s = LibAppStorage.diamondStorage();
         LibNestable._requireMinted(tokenId);
 
         return s._tokenApprovals[tokenId][ownerOf(tokenId)];
-    }
-
-    /**
-     * @notice Used to verify that the caller is either the owner of the token or approved to manage it by its owner.
-     * @param tokenId ID of the token to check
-     */
-    modifier onlyApprovedOrOwner(uint256 tokenId) {
-        _onlyApprovedOrOwner(tokenId);
-        _;
     }
 
     /**
@@ -96,5 +87,22 @@ library LibOwnership {
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view  returns (bool) {
         address owner = ownerOf(tokenId);
         return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender);
+    }
+
+    /**
+     * @notice Used to update the owner of the token and clear the approvals associated with the previous owner.
+     * @dev The `destinationId` should equal `0` if the new owner is an externally owned account.
+     * @param tokenId ID of the token being updated
+     * @param to Address of account to receive the token
+     */
+    function _updateOwnerAndClearApprovals(uint256 tokenId, address to) internal {
+        AppStorage storage s = LibAppStorage.diamondStorage();
+        address owner = s.owner[tokenId];
+
+        s.owner[tokenId] = to;
+
+        // Clear approvals from the previous owner
+        _approve(address(0), tokenId);
+        delete s._tokenApprovals[tokenId][owner];    
     }
 }

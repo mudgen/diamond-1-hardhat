@@ -14,7 +14,6 @@ error ERC721AddressZeroIsNotaValidOwner();
 error ERC721ApprovalToCurrentOwner();
 /// Attempting to grant approval when not being owner or approved for all should not be permitted
 error ERC721ApproveCallerIsNotOwnerNorApprovedForAll();
-/// Attempting to get approvals for a token owned by 0x0 (considered non-existent)
 error ERC721ApprovedQueryForNonexistentToken();
 /// Attempting to grant approval to self
 error ERC721ApproveToCaller();
@@ -141,3 +140,5 @@ error RMRKUnexpectedAssetId();
 error RMRKUnexpectedParent();
 /// Attempting not to pass an empty array of equippable addresses when adding or setting the equippable addresses
 error RMRKZeroLengthIdsPassed();
+/// Attempting to mint the NFT without enough payment
+error RMRKMintUnderpriced();
