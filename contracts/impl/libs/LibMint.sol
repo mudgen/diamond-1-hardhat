@@ -8,6 +8,7 @@ import { RMRKMintOverMax, RMRKMintUnderpriced, ERC721TransferToNonReceiverImplem
 import { LibMeta } from "../../shared/LibMeta.sol";
 import { LibERC721 } from "../../libraries/LibERC721.sol";
 import { LibNestable } from "./LibNestable.sol";
+import { LibOwnership } from "./LibOwnership.sol";
 
 library LibMint {
 
@@ -79,6 +80,8 @@ library LibMint {
         AppStorage storage s = LibAppStorage.diamondStorage();
         s._balances[to] += 1;
         s.owner[tokenId] = to;
+
+        LibOwnership.confirmOwnership(to, tokenId);
 
         emit LibERC721.Transfer(address(0), to, tokenId);
         emit LibNestable.NestTransfer(address(0), to, 0, 0, tokenId);

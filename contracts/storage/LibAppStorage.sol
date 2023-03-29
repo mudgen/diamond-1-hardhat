@@ -71,6 +71,8 @@ struct AppStorage {
     mapping(address => mapping(uint256 => uint256)) _childIsInActive;
     // Mapping of owner address to all tokenIDs
     mapping(address => uint256[]) _ownersToTokenIds;
+    
+    mapping(uint256 => uint256) _tokenIdToOwnerIndex;
 }
 
 /**

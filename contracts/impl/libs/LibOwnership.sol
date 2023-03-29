@@ -105,4 +105,27 @@ library LibOwnership {
         _approve(address(0), tokenId);
         delete s._tokenApprovals[tokenId][owner];    
     }
+
+    
+    function confirmOwnership(address _owner, uint256 _tokenId) internal {
+        require(_owner != address(0x0), "Owner must be valid");
+        AppStorage storage s = LibAppStorage.diamondStorage();
+        s._ownersToTokenIds[_owner].push(_tokenId);
+        uint256 newTokenIndex = uint256(s._ownersToTokenIds[_owner].length - 1);
+        s._tokenIdToOwnerIndex[_tokenId] = newTokenIndex;
+    }
+
+    function removeOwnership(address _owner, uint256 _tokenId) internal {
+        require(_owner != address(0x0), "Owner must be valid");
+        require(ownerOf(_tokenId) == _owner, "not the real owner");
+        AppStorage storage s = LibAppStorage.diamondStorage();
+
+        uint256 tokenIndex = s._tokenIdToOwnerIndex[_tokenId];
+        if (tokenIndex != s._ownersToTokenIds[_owner].length - 1) {
+            uint256 lastTokenId = s._ownersToTokenIds[_owner][s._ownersToTokenIds[_owner].length - 1];
+            s._ownersToTokenIds[_owner][tokenIndex] = lastTokenId;
+            s._tokenIdToOwnerIndex[lastTokenId] = tokenIndex;
+            s._ownersToTokenIds[_owner].pop();
+        }
+    }
 }

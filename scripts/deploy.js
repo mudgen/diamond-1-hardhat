@@ -99,7 +99,7 @@ async function deployDiamond() {
   await collectionMetaFacetInit.deployed()
 
   const collectionMetaFacetSelectors = getSelectors(collectionMetaFacet)
-  let collectionMetaCalldata = collectionMetaFacetInit.interface.encodeFunctionData('init', ['https://project-oracle-test.mypinata.cloud/ipfs/bafkreihnix2zvskkwdkxb2icb43j42f6yflc5kdotrmzdmk6nlqmqxjwma', 'https://project-oracle-test.mypinata.cloud/ipfs/QmRxFwKofDa8hebvQMXT8eU8xzck35gN9aRrY75H5eoDiz/'])
+  let collectionMetaCalldata = collectionMetaFacetInit.interface.encodeFunctionData('init', ['https://project-oracle-test.mypinata.cloud/ipfs/bafkreidbr7q2hxxsviaks6jrgz4aaicek5ylv5otwdq3v4u2l5op6yc4sq', 'https://project-oracle-test.mypinata.cloud/ipfs/QmWUhDtzYcyqovbkefa2oR19fnB4MTk2AC8W6xkY1EBoRv/'])
   tx = await diamondCutFacet.diamondCut(
     [{
       facetAddress: collectionMetaFacet.address,
@@ -125,7 +125,7 @@ async function deployDiamond() {
 
   const mintAndBurnFacetSelectors = getSelectors(mintAndBurnFacet)
   const pricePerMint = ethers.utils.parseUnits("0.01","ether");
-  let mintAndBurnCalldata = mintAndBurnInit.interface.encodeFunctionData('init', [999, pricePerMint])
+  let mintAndBurnCalldata = mintAndBurnInit.interface.encodeFunctionData('init', [16, pricePerMint])
   tx = await diamondCutFacet.diamondCut(
     [{
       facetAddress: mintAndBurnFacet.address,

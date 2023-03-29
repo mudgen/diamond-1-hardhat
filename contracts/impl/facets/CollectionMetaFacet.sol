@@ -4,11 +4,9 @@
 
 pragma solidity ^0.8.16;
 import {Modifiers} from "../../storage/LibAppStorage.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import {LibQuery} from "../libs/LibQuery.sol";
 
 contract CollectionMetaFacet is Modifiers {
-
-    using Strings for uint256;
 
     /**
      * @notice Used to retrieve the metadata of the collection.
@@ -26,8 +24,6 @@ contract CollectionMetaFacet is Modifiers {
     function tokenURI(
         uint256 tokenId
     ) public view virtual returns (string memory) {
-        uint256 imageNo = tokenId % 8;
-        return
-            string(abi.encodePacked(s._tokenURI, imageNo.toString(), '.png'));
+        return LibQuery.tokenURI(tokenId);
     }
 }

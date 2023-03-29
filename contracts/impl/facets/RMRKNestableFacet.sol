@@ -13,6 +13,7 @@ import {LibERC721} from "../../libraries/LibERC721.sol";
 import { LibNestable } from "../libs/LibNestable.sol";
 import { LibOwnership } from "../libs/LibOwnership.sol";
 import { LibMeta } from "../../shared/LibMeta.sol";
+import { LibQuery } from "../libs/LibQuery.sol";
 import "../../shared/RMRKErrors.sol";
 
 /**
@@ -25,11 +26,30 @@ import "../../shared/RMRKErrors.sol";
 contract RMRKNestableFacet is Modifiers {
     using Address for address;
 
+
     // ------------------------------- ERC721 ---------------------------------
 
     function balanceOf(address owner) public view returns (uint256) {
         if (owner == address(0)) revert ERC721AddressZeroIsNotaValidOwner();
         return s._balances[owner];
+    }
+
+    /**
+     * @notice Used to retrive certain tokenId with its index in `owner`'s collection
+     * @param owner Address of the account being checked
+     * @return tokenId the tokenId in that index 
+     * @return tokenUri the token url
+     */
+    function getOwnerCollectionByIndex(address owner, uint256 index)
+        public
+        view
+        virtual returns (uint256 tokenId, string memory tokenUri) {
+        
+        if (owner == address(0)) revert();
+        if (index >= s._ownersToTokenIds[owner].length) revert();
+
+        tokenId = s._ownersToTokenIds[owner][index];
+        tokenUri = LibQuery.tokenURI(tokenId); 
     }
 
     ////////////////////////////////////////

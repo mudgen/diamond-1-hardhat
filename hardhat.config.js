@@ -30,22 +30,22 @@ module.exports = {
     optimizer: {
       enabled: true,
       runs: 1000000
+    }
+  }, 
+  mocha: {
+    timeout: 90000
+  },
+  networks: {
+    hardhat: {
+      initialBaseFeePerGas: 0,
+      blockGasLimit: 18800000,
     },
-    mocha: {
-      timeout: 90000
-    },
-    networks: {
-      hardhat: {
-        initialBaseFeePerGas: 0,
-        blockGasLimit: 18800000,
-      },
-      mumbai: {
-        url: ALCHEMY_API_URL,
-        accounts: [`0x${PRIVATE_KEY}`]
-      }
-    },
-    namedAccounts: {
-      deployer: 0
-    },
-  }
+    mumbai: {
+      url: ALCHEMY_API_URL,
+      accounts: [`0x${PRIVATE_KEY}`]
+    }
+  },
+  namedAccounts: {
+    deployer: 0
+  },
 }

@@ -54,8 +54,10 @@ library LibTransfer {
         if (to == address(0)) revert ERC721TransferToTheZeroAddress();
 
         s._balances[from] -= 1;
+        LibOwnership.removeOwnership(from, tokenId);
         LibOwnership._updateOwnerAndClearApprovals(tokenId, to);
         s._balances[to] += 1;
+        LibOwnership.confirmOwnership(to, tokenId);
 
         emit LibERC721.Transfer(from, to, tokenId);
     }

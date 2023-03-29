@@ -33,6 +33,8 @@ library LibBurn {
 
         delete s.owner[tokenId];
 
+        LibOwnership.removeOwnership(owner, tokenId);
+
         emit LibERC721.Transfer(owner, address(0), tokenId);
     }
 }

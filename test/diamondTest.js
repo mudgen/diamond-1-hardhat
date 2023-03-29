@@ -101,10 +101,10 @@ describe('DiamondTest', async function () {
 
   it('should get correct collection meta info', async () => {
     const collecionMetaUrl = await collectionMetaFacet.collectionMetadata()
-    const tokenUri = await collectionMetaFacet.tokenURI(23)
+    const tokenUri = await collectionMetaFacet.tokenURI(15)
 
-    assert.equal(collecionMetaUrl, 'https://project-oracle-test.mypinata.cloud/ipfs/bafkreihnix2zvskkwdkxb2icb43j42f6yflc5kdotrmzdmk6nlqmqxjwma')
-    assert.equal(tokenUri, 'https://project-oracle-test.mypinata.cloud/ipfs/QmRxFwKofDa8hebvQMXT8eU8xzck35gN9aRrY75H5eoDiz/7.png')
+    assert.equal(collecionMetaUrl, 'https://project-oracle-test.mypinata.cloud/ipfs/bafkreidbr7q2hxxsviaks6jrgz4aaicek5ylv5otwdq3v4u2l5op6yc4sq')
+    assert.equal(tokenUri, 'https://project-oracle-test.mypinata.cloud/ipfs/QmWUhDtzYcyqovbkefa2oR19fnB4MTk2AC8W6xkY1EBoRv/15')
   })
 
   it('should get correct royalty info', async () => {
@@ -150,11 +150,16 @@ describe('DiamondTest', async function () {
 
     // check max supply
     const maxSupply = await baseInfoFacet.maxSupply()
-    assert.equal(maxSupply, 999)
+    assert.equal(maxSupply, 16)
 
     // check owner's balance
     const balance = await rmrkNestableFacet.balanceOf(contractOwnerAddress)
     assert.equal(1, balance)
+
+    // check get token uri by index
+    const {tokenId, tokenUri} = await rmrkNestableFacet.getOwnerCollectionByIndex(contractOwnerAddress, 0)
+    assert.equal(1, tokenId)
+    assert.equal("https://project-oracle-test.mypinata.cloud/ipfs/QmWUhDtzYcyqovbkefa2oR19fnB4MTk2AC8W6xkY1EBoRv/1", tokenUri)
   })
 
 })
