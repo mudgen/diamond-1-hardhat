@@ -54,7 +54,12 @@ If we followed the zepplin nomenclature we would re-name the reference Diamond t
 
 ### Smart Wallet interacts with Application (eg a Game)
 
-```plantuml
+![fig-1](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/polysensus/diamond-1-tracker-hardhat/main/fig1.puml)
+
+![fig-1-a](http://www.plantuml.com/plantuml/proxy?cache=no&src=./fig1.puml)
+
+
+```xplantuml
 @startuml
 skinparam componentStyle rectangle
 User -> [Smart Wallet]
@@ -105,8 +110,6 @@ Notice that while the Application may also be a Diamond, there is no requirement
 ## Diamond Tracker
 
 If the wallet wants to provide for user opt outs and extensions in preference to the governed (central) implementation it would be natural to implement the Tracker itself as a Diamond.
-
-![fig-1](./fig1.svg)
 
 ```plantuml
 @startuml
