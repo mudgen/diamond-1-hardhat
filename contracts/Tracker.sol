@@ -7,8 +7,6 @@ pragma solidity ^0.8.0;
 /******************************************************************************/
 
 import { IDiamondLoupe } from "./interfaces/IDiamondLoupe.sol";
-import { IERC165 } from "./interfaces/IERC165.sol";
-import { IERC173 } from "./interfaces/IERC173.sol";
 import { Proxy } from "./Proxy.sol";
 import { LibTracker } from "./libraries/LibTracker.sol";
 
@@ -23,22 +21,15 @@ struct TrackerArgs {
  * this doubles the indirection cost of every call. As the expected use of this
  * is ERC 4337 abstracted accounts, this overhead seems a fair trade.
  */
-contract Tracker is Proxy, IDiamondLoupe, IERC165, IERC173 {
+contract Tracker is Proxy, IDiamondLoupe {
 
     constructor(TrackerArgs memory _args) payable {
-        LibTracker.setContractOwner(_args.owner);
         LibTracker.setTarget(_args.diamondTarget);
 
         // Note: this implementation is NOT upgradable, see DiamondTracker for the full show.
 
-        // So we do the ERC 165 configuration directly in the constructor
-        // adding ERC165 data
-        LibTracker.TrackerStorage storage s = LibTracker.trackerStorage();
-        s.supportedInterfaces[type(IERC165).interfaceId] = true;
-        // Notice: we don't implement the IDiamondCut interface, the tracked
-        // diamond is probably not owned by the tracker.
-        s.supportedInterfaces[type(IDiamondLoupe).interfaceId] = true;
-        s.supportedInterfaces[type(IERC173).interfaceId] = true;
+        // Note: ERC 165 & ERC 173 support are illustrated in DiamondTracker
+        // (which is the variant that supports user customization and opt outs)
     }
 
     receive() external payable {}
@@ -55,28 +46,6 @@ contract Tracker is Proxy, IDiamondLoupe, IERC165, IERC173 {
     /// @notice Gets the facet address that supports the given selector.
     function _facetAddress(bytes4 _functionSelector) internal view returns (address facetAddress_) {
         return IDiamondLoupe(LibTracker.getTarget()).facetAddress(_functionSelector);
-    }
-
-    // ------------------------------------------
-    // This implements ERC-165.
-    // ------------------------------------------
-
-    function supportsInterface(bytes4 _interfaceId) external override view returns (bool) {
-        LibTracker.TrackerStorage storage s = LibTracker.trackerStorage();
-        return s.supportedInterfaces[_interfaceId];
-    }
-
-    // ------------------------------------------
-    // ERC-173 implementation.
-    // ------------------------------------------
-
-    function transferOwnership(address _newOwner) external override {
-        LibTracker.enforceIsContractOwner();
-        LibTracker.setContractOwner(_newOwner);
-    }
-
-    function owner() external override view returns (address owner_) {
-        owner_ = LibTracker.contractOwner();
     }
 
     // ------------------------------------------
