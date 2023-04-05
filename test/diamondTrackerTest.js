@@ -103,7 +103,9 @@ describe('DiamondTrackerTest', async function () {
       await trackerLoupeFacet.facetAddress('0xcdffacc6')
     )
 
-    // The tracker has one implementation facet and its in position 0. it implements IDiamondLoupe
+    // The tracker has one implementation facet and its in position 0. it
+    // implements IDiamondLoupe. This OVERRIDES the implementation in the target
+    // diamond
     assert.equal(
       trackerAddresses[0],
       await trackerLoupeFacet.facetAddress('0xcdffacc6')
