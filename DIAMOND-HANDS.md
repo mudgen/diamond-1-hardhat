@@ -67,6 +67,8 @@ At this point, the Tracker is a simple proxy. Creating a double proxy via Diamon
 
 Notice that while the Application may also be a Diamond, there is no requirement for it to be so. Its implementation is completely outside the scope of the wallet **unless** the wallet vendor is specifically choosing to design the wallet around that application.
 
+This lends itself to a fairly light touch implementation comprising a [Proxy base](contracts/Proxy.sol#L16) and a direct implementation of IDiamondLoupe on the [derived tracker](contracts/Tracker.sol#L24)
+
 ## Diamond Tracker
 
 If the wallet wants to provide for user opt outs and extensions in preference to the governed (central) implementation it would be natural to implement the Tracker itself as a Diamond.
@@ -79,7 +81,7 @@ If the wallet wants to provide for user opt outs and extensions in preference to
 
 ### louper diamond tracker rules
 
-This requires a more involved fallback and louper method implementations on the Tracker Diamond. See the [example](contracts/facets/DiamondTrackerLoupeFacet.sol#L17) implementation
+This requires a more involved fallback and louper method implementations on the Tracker Diamond. See the [example](contracts/facets/DiamondTrackerLoupeFacet.sol#L22) implementation
 
 1. IDiamondCut MUST behave exactly as per ERC 2535 - if it is executed via the tracker, then it cuts the tracker. The tracker may have its own implementation but it will only have access to the user diamond storage.
 2. IDiamondLoupe.facets MUST aggregate the facets from the tracked target with the local selectors.
