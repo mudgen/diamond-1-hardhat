@@ -1,5 +1,8 @@
 # Diamond-1-Tracker-Hardhat Implementation
 
+Implements two kinds of beacon proxies for ERC 2535 contract systems.
+The please see [DIAMOND HANDS](DIAMOND-HANDS.md) for the motivation and details.
+
 This is derived from the reference  implementation for [EIP-2535 Diamonds](https://github.com/ethereum/EIPs/issues/2535).
 
 Which can be found at [diamond-1-hardhat](https://github.com/mudgen/diamond-1-hardhat/blob/main/README.md)
