@@ -1,12 +1,15 @@
 # Centralized upgrades, user opt outs and customizations.
 
-Intended for mass management of ERC 4337 smart wallets which interact with one or more applications. Those applications may be agnostic to the wallet facilities. Applications may want to provide specialized wallet behaviour. Wallet users may want to opt out of specific wallet behaviour or customize it.
-
 ## Context
 
 If we represent the authority of individuals on chain using programable wallets for the "next billion web3 users" how are we going to cope when we need to patch all those wallets for a security vulnerability ?
 
-If we want user wallets to enable rich application specific behaviour how are we going to accomplish that composeability on chain ?
+If we want user wallets to enable rich application specific behavior how are we going to accomplish that composeability on chain ?
+
+
+The approach described here, and illustrated by the contracts in this repository, is aimed at facilitating mass management of ERC 4337 smart wallets which interact with one or more applications. Those applications may be agnostic to the wallet facilities. Applications may want to provide specialized wallet behavior. Wallet users may want to opt out of specific wallet behavior or customize it.
+
+The primary use case in mind here is online gaming. But the applicability is general.
 
 ### Problem 1: user apathy vs security
 
@@ -15,6 +18,23 @@ When a smart wallet implementation needs to be upgraded for a vulnerability, req
 ### Problem 2: operational cost to perform upgrades
 
 Even if a smart wallet vendor was technically able to upgrade millions (or possibly billions) of smart wallet accounts on behalf of their owners, doing so would be prohibitively expensive.
+
+### Problem 3: conflicts of interest between wallet owners and application owners
+
+An extra level of indirection can solve problems 1 & 2 if the extra per call cost is acceptable. But there is no single good answer to reconcile the interests of people who use applications with the makers and publishers of those applications. For smart wallets to solve this problem we need to **at least** permit user opt outs, and probably also user customizations, of shared wallet functionality.
+
+These problems are all very familiar to most software vendors. In games, problem 3 is typically addressed by gamers installing un-official clients and tooling - from the application perspective this is _cheating_
+
+## Approach
+
+We can solve 1 & 2 with an extra level of indirection between the wallet implementation and the user state - simple proxy. This comes at additional per call cost, but especially in the context of ERC 4337 and the indirection already implied by User Operations, this seems like a fair trade. To solve 3, the tracker needs to also be a composable & upgradable implementation - a diamond.
+
+This leads to the two distinct approaches illustrated by this repository:
+
+1. **Tracker** - for when only problems 1&2 matter.
+2. **DiamondTracker** - for when 1, 2 & 3 all matter.
+
+The DiamondTracker is a **Double Diamond**, and the first diamond can be thought of as the users **Diamond Hands** holding their smart wallet.
  
 ### Use Case 1: user accounts for games
 
@@ -32,7 +52,7 @@ We use the [beacon proxy][ZEP-BEACON] model to indirect access to the wallet imp
 
 If we followed the zepplin nomenclature we would re-name the reference Diamond to be DiamondBeacon. This seems un-necessarily confusing to people who have absorbed the Diamond standard. So we formalise from the other end of the relationship - the contract that *follows* the beacon is the **Tracker**
 
-## Smart Wallet interacts with Application (eg a Game)
+### Smart Wallet interacts with Application (eg a Game)
 
 ```plantuml
 @startuml
@@ -48,6 +68,8 @@ cloud UserOperations{
 
 
 The user sees the address of the **Tracker** as their Smart Wallet address. Every user has their own address. Each user tracker follows a *vendors* Diamond Wallet implementation. **Governance** between the user and wallet vendor is defined by the specific implementation facets.
+
+### Tracker as a simple proxy
 
 ```plantuml
 @startuml
@@ -78,9 +100,9 @@ Vendor --> [Diamond Wallet]
 
 At this point, the Tracker is a simple proxy. Creating a double proxy via Diamond Wallet. The wallet vendor can interact with the Diamond Wallet to perform upgrades, and all Trackers following that wallet implementation will 'track' that implementation automatically.
 
-I think of the Tacker, with an ERC 4337 implementation, as my **diamond hands**
-
 Notice that while the Application may also be a Diamond, there is no requirement for it to be so. Its implementation is completely outside the scope of the wallet **unless** the wallet vendor is specifically choosing to design the wallet around that application.
+
+## Diamond Tracker
 
 If the wallet wants to provide for user opt outs and extensions in preference to the governed (central) implementation it would be natural to implement the Tracker itself as a Diamond.
 
@@ -111,8 +133,20 @@ Vendor --> [Diamond Wallet]
 
 @enduml
 ```
+* Wallet facets invoked via the Tracker Diamond operate in **User Storage**
+* User Facets can _only_ operate in **User Storage**
+* Wallet Facets invoked by the vendor directly on the **Diamond Wallet** operate in **Vendor Storage**
 
+### louper diamond tracker rules
 This requires a more involved fallback and louper method implementations on the Tracker Diamond.
+
+1. IDiamondCut MUST NOT call  (the owner would be wrong anyway) ??
+2. IDiamondLoupe.facets MUST aggregate the facets from the tracked target with the local selectors.
+3. IDiamondLoupe.facetFunctionSelectors MUST support local facets and proxied - if the facet isn't local, proxy the call.
+4. IDiamondLoupe.facetAddresses MUST aggregate the addresses from the tracked and the remote
+5. IDiamondLoupe.facetAddress MUST support local and proxied function selectors
+
+
 
 ## What does the user see ?
 
@@ -123,7 +157,7 @@ This requires a more involved fallback and louper method implementations on the 
 * If the Tracker Diamond is in play
   * some kind of opt in/out mechanism
   * personalisable wallet implementation
-* The likely variance in wallet governance implies that users will have many smart wallets.
+* The likely variance in wallet governance implies that users will still want many smart wallets.
 
 
 ## Governance
@@ -138,7 +172,7 @@ The user must decide if they trust the governance rules of the diamond wallet pu
 
 ### Platform specific smart wallets
 
-A common platform implements smart wallet behaviour on behalf of many dapps. Each user is onboarded to the platform and configures one or more dapps supported by that platform. The platform is the vendor and manages upgrades of user smart wallets on behalf of both users and dapp developers.
+A common platform implements smart wallet behavior on behalf of many dapps. Each user is on-boarded to the platform and configures one or more dapps supported by that platform. The platform is the vendor and manages upgrades of user smart wallets on behalf of both users and dapp developers.
 
 The user must decide if they trust the governance rules of the diamond wallet put in place by the platform developer.
 
@@ -146,13 +180,13 @@ The user must decide if they trust the governance rules of the diamond wallet pu
 
 There is no central vendor for the smart wallet implementation
 
+If the smart wallet vendor is a DAO, can we do away with the Double Diamond all together and instead give the wallet user a place in the governance ? It still seems like an irreconcilable bottle neck - like getting all members of the EU to agree to something. 
+
+The collective will is, by definition, imperfectly aligned with the individuals of that collective.
+
 ## TODO's
 
 ### How lean can we make the simple proxy ?
-
-Q1: try to use a proxy that only has fallback. does it 'fallback' to IDiamondLoupe and IDiamondCut as implemented in the target diamond ?
-
-A1: this doesn't work because the fallback causes the diamond method to execute in the storage of the tracker which DOES NOT HAVE the diamond methods etc
 
 ## References
 

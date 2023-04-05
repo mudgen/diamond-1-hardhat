@@ -8,11 +8,11 @@ pragma solidity ^0.8.0;
 
 import { IDiamondLoupe } from "./interfaces/IDiamondLoupe.sol";
 import { Proxy } from "./Proxy.sol";
+
 import { LibTracker } from "./libraries/LibTracker.sol";
 
 struct TrackerArgs {
     address diamondTarget;
-    address owner;
 }
 
 /**
@@ -49,7 +49,7 @@ contract Tracker is Proxy, IDiamondLoupe {
     }
 
     // ------------------------------------------
-    // IDiamondLoupe implementation
+    // IDiamondLoupe proxied implementation
     // ------------------------------------------
     /// @notice Gets all facets and their selectors.
     function facets() external override view returns (Facet[] memory facets_) {
