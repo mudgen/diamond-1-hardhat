@@ -54,54 +54,14 @@ If we followed the zepplin nomenclature we would re-name the reference Diamond t
 
 ### Smart Wallet interacts with Application (eg a Game)
 
-![fig-1](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/polysensus/diamond-1-tracker-hardhat/main/fig1.puml)
-
-![fig-1-a](http://www.plantuml.com/plantuml/proxy?cache=no&src=./fig1.puml)
-
-
-```xplantuml
-@startuml
-skinparam componentStyle rectangle
-User -> [Smart Wallet]
-cloud UserOperations{
-    [4337 Bundler]
-}
-[Smart Wallet] .> [4337 Bundler]
-[4337 Bundler] .> [Application]
-@enduml
-```
+![fig-1](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/polysensus/diamond-1-tracker-hardhat/main/fig-1.puml)
 
 
 The user sees the address of the **Tracker** as their Smart Wallet address. Every user has their own address. Each user tracker follows a *vendors* Diamond Wallet implementation. **Governance** between the user and wallet vendor is defined by the specific implementation facets.
 
 ### Tracker as a simple proxy
 
-```plantuml
-@startuml
-skinparam componentStyle rectangle
-package "Smart Wallet" {
-    database "User Storage" {
-    }
-
-    database "Vendor Storage" {
-    }
-
-    [Tracker] -> [Diamond Wallet]
-    [Diamond Wallet] ..> [Wallet Facets]
-    [Tracker] --> [User Storage]
-    [Diamond Wallet] --> [Vendor Storage]
-
-}
-cloud UserOperations{
-}
-
-User --> [Tracker]
-Vendor --> [Diamond Wallet]
-
-[Diamond Wallet] -> [UserOperations]
-
-@enduml
-```
+![fig-2](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/polysensus/diamond-1-tracker-hardhat/main/fig-2.puml)
 
 At this point, the Tracker is a simple proxy. Creating a double proxy via Diamond Wallet. The wallet vendor can interact with the Diamond Wallet to perform upgrades, and all Trackers following that wallet implementation will 'track' that implementation automatically.
 
@@ -111,33 +71,8 @@ Notice that while the Application may also be a Diamond, there is no requirement
 
 If the wallet wants to provide for user opt outs and extensions in preference to the governed (central) implementation it would be natural to implement the Tracker itself as a Diamond.
 
-```plantuml
-@startuml
-skinparam componentStyle rectangle
-package "Smart Wallet" {
-    database "User Storage" {
-    }
+![fig-3](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/polysensus/diamond-1-tracker-hardhat/main/fig-3.puml)
 
-    database "Vendor Storage" {
-    }
-
-    [Tracker Diamond] -> [Diamond Wallet]
-    [Tracker Diamond] ..> [User Facets]
-    [Diamond Wallet] ..> [Wallet Facets]
-    [Tracker Diamond] --> [User Storage]
-    [Diamond Wallet] --> [Vendor Storage]
-
-}
-cloud UserOperations{
-}
-
-User --> [Tracker Diamond]
-Vendor --> [Diamond Wallet]
-
-[Diamond Wallet] -> [UserOperations]
-
-@enduml
-```
 * Wallet facets invoked via the Tracker Diamond operate in **User Storage**
 * User Facets can _only_ operate in **User Storage**
 * Wallet Facets invoked by the vendor directly on the **Diamond Wallet** operate in **Vendor Storage**
