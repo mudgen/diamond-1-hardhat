@@ -79,7 +79,7 @@ If the wallet wants to provide for user opt outs and extensions in preference to
 
 ### louper diamond tracker rules
 
-This requires a more involved fallback and louper method implementations on the Tracker Diamond. See the [example](contracts/facets/DiamondTrackerLoupeFacet.sol) implementation
+This requires a more involved fallback and louper method implementations on the Tracker Diamond. See the [example](contracts/facets/DiamondTrackerLoupeFacet.sol#L17) implementation
 
 1. IDiamondCut MUST behave exactly as per ERC 2535 - if it is executed via the tracker, then it cuts the tracker. The tracker may have its own implementation but it will only have access to the user diamond storage.
 2. IDiamondLoupe.facets MUST aggregate the facets from the tracked target with the local selectors.
