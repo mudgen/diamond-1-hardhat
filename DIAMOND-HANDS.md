@@ -106,6 +106,8 @@ Notice that while the Application may also be a Diamond, there is no requirement
 
 If the wallet wants to provide for user opt outs and extensions in preference to the governed (central) implementation it would be natural to implement the Tracker itself as a Diamond.
 
+![fig-1](./fig1.svg)
+
 ```plantuml
 @startuml
 skinparam componentStyle rectangle
