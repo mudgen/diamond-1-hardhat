@@ -78,9 +78,10 @@ If the wallet wants to provide for user opt outs and extensions in preference to
 * Wallet Facets invoked by the vendor directly on the **Diamond Wallet** operate in **Vendor Storage**
 
 ### louper diamond tracker rules
-This requires a more involved fallback and louper method implementations on the Tracker Diamond.
 
-1. IDiamondCut MUST NOT call  (the owner would be wrong anyway) ??
+This requires a more involved fallback and louper method implementations on the Tracker Diamond. See the [example](contracts/facets/DiamondTrackerLoupeFacet.sol) implementation
+
+1. IDiamondCut MUST behave exactly as per ERC 2535 - if it is executed via the tracker, then it cuts the tracker. The tracker may have its own implementation but it will only have access to the user diamond storage.
 2. IDiamondLoupe.facets MUST aggregate the facets from the tracked target with the local selectors.
 3. IDiamondLoupe.facetFunctionSelectors MUST support local facets and proxied - if the facet isn't local, proxy the call.
 4. IDiamondLoupe.facetAddresses MUST aggregate the addresses from the tracked and the remote
