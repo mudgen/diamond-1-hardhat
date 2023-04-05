@@ -1,5 +1,9 @@
-/* global ethers */
 /* eslint prefer-const: "off" */
+
+// Use the hre explicitly so we can run scripts as plain node scripts/xxx.js and
+// pass in arguments (which isn't possible via npx hardhat run)
+const hre = require("hardhat");
+const ethers = hre.ethers;
 
 const { getSelectors, FacetCutAction } = require('./libraries/diamond.js')
 

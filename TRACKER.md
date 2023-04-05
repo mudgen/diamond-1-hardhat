@@ -1,6 +1,6 @@
-# Centralized upgrades
+# Centralized upgrades, user opt outs and customizations.
 
-intended for mass management of ERC 4337 smart wallets
+Intended for mass management of ERC 4337 smart wallets which interact with one or more applications. Those applications may be agnostic to the wallet facilities. Applications may want to provide specialized wallet behaviour. Wallet users may want to opt out of specific wallet behaviour or customize it.
 
 ## Context
 
@@ -18,17 +18,19 @@ Even if a smart wallet vendor was technically able to upgrade millions (or possi
  
 ### Use Case 1: user accounts for games
 
-The game(s) is/are an independent diamond system
+Game developers (or a publisher) provide a governed wallet implementation for users of the game or games. Users are typically happy to accept that governance. Some  users MAY want to customise their wallet. Some users MAY want to opt out of some wallet functionality.
 
-The wallet is an EIP 4337 smart account using Tracker to follow a wallet implementation that is 
+Note that the Game Wallet and the Game are two completely independent contract systems. Using the Diamond standard to make the wallet does not itself require that the Game be implemented as a diamond.
+
+The Smart Wallet is essentially a presence and an authority system for some arbitrary application. If the application wants bespoke wallet functionality it is free to define that. But it need not do so.
 
 ## Tracker
 
 We use the [diamond][ERC-2535] standard to make a composable and extensible wallet.
 
-We use the [beacon proxy][ZEP-BEACON] model to indirect access to the wallet implementation. This is a _double_ proxy: the tracker follows the wallet implementation. The wallet implementation is itself a Diamond proxying to Facet contracts.
+We use the [beacon proxy][ZEP-BEACON] model to indirect access to the wallet implementation. This is a _double_ proxy: the tracker follows the wallet implementation.
 
-If we followed the zepplin nomenclature we would re-name the reference Diamond to be DiamondBeacon. This seems un-necessarily confusing to people who have absorbed the Diamond standard. So we formalise from the other end of the relation ship - the contract that *follows* the beacon is the **Tracker**
+If we followed the zepplin nomenclature we would re-name the reference Diamond to be DiamondBeacon. This seems un-necessarily confusing to people who have absorbed the Diamond standard. So we formalise from the other end of the relationship - the contract that *follows* the beacon is the **Tracker**
 
 ## Smart Wallet interacts with Application (eg a Game)
 
@@ -78,9 +80,9 @@ At this point, the Tracker is a simple proxy. Creating a double proxy via Diamon
 
 I think of the Tacker, with an ERC 4337 implementation, as my **diamond hands**
 
-Notice that while the Application may also be a Diamond, there is no requirement for it to be so. Its implementation is completely outside the scope of the wallet **unless* the wallet vendor is specifically choosing to design the wallet around that application.
+Notice that while the Application may also be a Diamond, there is no requirement for it to be so. Its implementation is completely outside the scope of the wallet **unless** the wallet vendor is specifically choosing to design the wallet around that application.
 
-This repository stops at this point. The Tracker is implemented as a simple proxy for the Diamond. To provide for per user (and user managed) wallet extensibility, the Tracker could itself be a Diamond. This is the Double Diamond topology
+If the wallet wants to provide for user opt outs and extensions in preference to the governed (central) implementation it would be natural to implement the Tracker itself as a Diamond.
 
 ```plantuml
 @startuml
@@ -93,7 +95,7 @@ package "Smart Wallet" {
     }
 
     [Tracker Diamond] -> [Diamond Wallet]
-    [Tracker Diamond] ..> [Tracker Facets]
+    [Tracker Diamond] ..> [User Facets]
     [Diamond Wallet] ..> [Wallet Facets]
     [Tracker Diamond] --> [User Storage]
     [Diamond Wallet] --> [Vendor Storage]
@@ -110,7 +112,7 @@ Vendor --> [Diamond Wallet]
 @enduml
 ```
 
-However, this likely requires significantly more involved fallback and louper method implementations on the Tracker Diamond. This topology is likely required in order to enable facet by facet 'opt outs' in the smart wallet.
+This requires a more involved fallback and louper method implementations on the Tracker Diamond.
 
 ## What does the user see ?
 
@@ -144,6 +146,13 @@ The user must decide if they trust the governance rules of the diamond wallet pu
 
 There is no central vendor for the smart wallet implementation
 
+## TODO's
+
+### How lean can we make the simple proxy ?
+
+Q1: try to use a proxy that only has fallback. does it 'fallback' to IDiamondLoupe and IDiamondCut as implemented in the target diamond ?
+
+A1: this doesn't work because the fallback causes the diamond method to execute in the storage of the tracker which DOES NOT HAVE the diamond methods etc
 
 ## References
 

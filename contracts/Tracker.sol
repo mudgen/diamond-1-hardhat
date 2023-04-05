@@ -35,7 +35,8 @@ contract Tracker is Proxy, IDiamondLoupe, IERC165, IERC173 {
         // adding ERC165 data
         LibTracker.TrackerStorage storage s = LibTracker.trackerStorage();
         s.supportedInterfaces[type(IERC165).interfaceId] = true;
-        // Notice: we don't implement the IDiamondCut interface
+        // Notice: we don't implement the IDiamondCut interface, the tracked
+        // diamond is probably not owned by the tracker.
         s.supportedInterfaces[type(IDiamondLoupe).interfaceId] = true;
         s.supportedInterfaces[type(IERC173).interfaceId] = true;
     }
@@ -50,6 +51,10 @@ contract Tracker is Proxy, IDiamondLoupe, IERC165, IERC173 {
     /// @ return facetAddress_ The facet address for msg.sig (from the target diamond)
     function _getImplementation() internal view virtual override returns (address implementation) {
         return _facetAddress(msg.sig);
+    }
+    /// @notice Gets the facet address that supports the given selector.
+    function _facetAddress(bytes4 _functionSelector) internal view returns (address facetAddress_) {
+        return IDiamondLoupe(LibTracker.getTarget()).facetAddress(_functionSelector);
     }
 
     // ------------------------------------------
@@ -77,7 +82,6 @@ contract Tracker is Proxy, IDiamondLoupe, IERC165, IERC173 {
     // ------------------------------------------
     // IDiamondLoupe implementation
     // ------------------------------------------
-
     /// @notice Gets all facets and their selectors.
     function facets() external override view returns (Facet[] memory facets_) {
         return IDiamondLoupe(LibTracker.getTarget()).facets();
@@ -93,10 +97,6 @@ contract Tracker is Proxy, IDiamondLoupe, IERC165, IERC173 {
         return IDiamondLoupe(LibTracker.getTarget()).facetAddresses();
     }
 
-    /// @notice Gets the facet address that supports the given selector.
-    function _facetAddress(bytes4 _functionSelector) internal view returns (address facetAddress_) {
-        return IDiamondLoupe(LibTracker.getTarget()).facetAddress(_functionSelector);
-    }
     function facetAddress(bytes4 _functionSelector) external override view returns (address facetAddress_) {
         return _facetAddress(_functionSelector);
     }
