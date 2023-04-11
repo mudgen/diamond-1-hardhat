@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.8.2",
+    "@rmrk-team/evm-contracts": "^0.26.0",
     "hardhat-deploy": "^0.11.24"
   }
 }

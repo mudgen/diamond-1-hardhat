@@ -25,7 +25,7 @@ import "../../shared/RMRKErrors.sol";
  */
 contract RMRKNestableFacet is Modifiers {
     using Address for address;
-
+    
 
     // ------------------------------- ERC721 ---------------------------------
 
@@ -78,20 +78,9 @@ contract RMRKNestableFacet is Modifiers {
         address childAddress = LibMeta._msgSender();
         if (!childAddress.isContract()) revert RMRKIsNotContract();
 
-        Child memory child = Child({contractAddress: childAddress, tokenId: childId});
-
         _beforeAddChild(parentId, childAddress, childId, data);
 
-        uint256 length = pendingChildrenOf(parentId).length;
-
-        if (length < 128) {
-            s._pendingChildren[parentId].push(child);
-        } else {
-            revert RMRKMaxPendingChildrenReached();
-        }
-
-        // Previous length matches the index for the new child
-        emit LibNestable.ChildProposed(parentId, length, childAddress, childId);
+        LibNestable.appendChild(childAddress, parentId, childId);
 
         _afterAddChild(parentId, childAddress, childId, data);
     }
@@ -135,6 +124,7 @@ contract RMRKNestableFacet is Modifiers {
         // Add to active:
         s._activeChildren[parentId].push(child);
         s._childIsInActive[childAddress][childId] = 1; // We use 1 as true
+        s._activeChildrenAddressCount[parentId][childAddress]++;
 
         emit LibNestable.ChildAccepted(parentId, childIndex, childAddress, childId);
 
@@ -241,6 +231,7 @@ contract RMRKNestableFacet is Modifiers {
             _removeChildByIndex(s._pendingChildren[tokenId], childIndex);
         } else {
             delete s._childIsInActive[childAddress][childId];
+            s._activeChildrenAddressCount[tokenId][childAddress]--;
             _removeChildByIndex(s._activeChildren[tokenId], childIndex);
         }
 
@@ -276,6 +267,20 @@ contract RMRKNestableFacet is Modifiers {
     //      CHILD MANAGEMENT GETTERS
     ////////////////////////////////////////
 
+    /**
+     * @notice Used to retrieve the pending child tokens of a given parent token.
+     * @dev Returns array of pending Child structs existing for given parent.
+     * @dev The Child struct consists of the following values:
+     *  [
+     *      tokenId,
+     *      contractAddress
+     *  ]
+     * @param parentId ID of the parent token for which to retrieve the pending child tokens
+     * @return struct[] An array of Child structs containing the parent token's pending child tokens
+     */
+    function pendingChildrenOf(uint256 parentId) public view  returns (Child[] memory) {
+        return LibNestable.pendingChildrenOf(parentId);
+    }
      /**
      * @notice Used to retrieve the active child tokens of a given parent token.
      * @dev Returns array of Child structs existing for parent token.
@@ -292,21 +297,6 @@ contract RMRKNestableFacet is Modifiers {
         return children;
     }
 
-    /**
-     * @notice Used to retrieve the pending child tokens of a given parent token.
-     * @dev Returns array of pending Child structs existing for given parent.
-     * @dev The Child struct consists of the following values:
-     *  [
-     *      tokenId,
-     *      contractAddress
-     *  ]
-     * @param parentId ID of the parent token for which to retrieve the pending child tokens
-     * @return struct[] An array of Child structs containing the parent token's pending child tokens
-     */
-    function pendingChildrenOf(uint256 parentId) public view  returns (Child[] memory) {
-        Child[] memory pendingChildren = s._pendingChildren[parentId];
-        return pendingChildren;
-    }
 
     /**
      * @notice Used to retrieve a specific active child token for a given parent token.
@@ -339,7 +329,7 @@ contract RMRKNestableFacet is Modifiers {
      * @return struct A Child struct containting data about the specified child
      */
     function pendingChildOf(uint256 parentId, uint256 index) public view  returns (Child memory) {
-        if (pendingChildrenOf(parentId).length <= index) revert RMRKPendingChildIndexOutOfRange();
+        if (LibNestable.pendingChildrenOf(parentId).length <= index) revert RMRKPendingChildIndexOutOfRange();
         Child memory child = s._pendingChildren[parentId][index];
         return child;
     }

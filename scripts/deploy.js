@@ -2,12 +2,17 @@
 /* eslint prefer-const: "off" */
 
 const { ethers } = require('hardhat')
+const { deployAuthenticSCManager } = require('./deployAuthenticSC.js') 
 const { getSelectors, FacetCutAction } = require('./libraries/diamond.js')
 
 async function deployDiamond() {
   const accounts = await ethers.getSigners()
   const contractOwner = accounts[0]
   const contractOwnerAddress = await contractOwner.getAddress()
+
+  // deploy authentic smart contract
+  const scManagerAddress = await deployAuthenticSCManager();
+  console.log('authenticate sc manager deployed: ', scManagerAddress)
 
   // Deploy DiamondInit
   // DiamondInit provides a function that is called when the diamond is upgraded or deployed to initialize state variables
@@ -73,7 +78,7 @@ async function deployDiamond() {
   await baseInfoInit.deployed()
 
   const baseInfoSelectors = getSelectors(baseInfoFacet)
-  let baseInfoCalldata = baseInfoInit.interface.encodeFunctionData('init', ['NAIN NFT', 'NAIN'])
+  let baseInfoCalldata = baseInfoInit.interface.encodeFunctionData('init', ['NAIN NFT', 'NAIN', scManagerAddress])
   tx = await diamondCutFacet.diamondCut(
     [{
       facetAddress: baseInfoFacet.address,
@@ -206,7 +211,7 @@ async function deployDiamond() {
 
 
   // returning the address of the diamond
-  return diamond.address
+  return {scManagerAddress, diamondAddress}
 }
 
 // We recommend this pattern to be able to use async/await everywhere

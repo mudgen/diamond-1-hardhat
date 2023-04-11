@@ -49,6 +49,9 @@ struct AppStorage {
     // royalty percentage bps
     uint256 _royaltyPercentageBps;
 
+    // authenticate smart contract address manager
+    address _authenticateSCManager;
+
     // Mapping owner address to token count
     mapping(address => uint256) _balances;
     // Mapping from token ID to approver address to approved address
@@ -63,6 +66,7 @@ struct AppStorage {
     mapping(uint256 => address) owner;
     // Mapping of tokenId to array of active children structs
     mapping(uint256 => Child[]) _activeChildren;
+    mapping(uint256 => mapping(address => uint256)) _activeChildrenAddressCount;
     // Mapping of tokenId to array of pending children structs
     mapping(uint256 => Child[]) _pendingChildren;
     // Mapping of child token address to child token ID to whether they are pending or active on any token

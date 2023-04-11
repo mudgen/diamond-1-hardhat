@@ -3,6 +3,9 @@
 pragma solidity ^0.8.16;
 
 import { LibAppStorage, AppStorage } from "../../storage/LibAppStorage.sol";
+import { IAuthenticateSCManager } from "../../interfaces/IAuthenticateSCManager.sol";
+import "../../interfaces/IRMRKNestable.sol";
+import "../../shared/RMRKErrors.sol";
 
 library LibNestable {
      /**
@@ -76,5 +79,100 @@ library LibNestable {
     function _exists(uint256 tokenId) internal view  returns (bool) {
         AppStorage storage s = LibAppStorage.diamondStorage();
         return s.owner[tokenId] != address(0);
+    }
+
+    /**
+     * @notice used to check if current child NFT address is authenticated and maximal active children number for this NFT
+     * @param   childNFTAddress     child nft origin smart contract address
+     * @return  bool                true: the child NFT smart contract is authenticated
+     * @return  uint256             maximal active children number for this child NFT
+     */
+    function _authenticated(address childNFTAddress) internal view returns (bool, uint256) {
+        AppStorage storage s = LibAppStorage.diamondStorage();
+        address scManagerAddress = s._authenticateSCManager;
+
+        bool authentic;
+        uint256 maxActiveNum;
+        (authentic, maxActiveNum) = IAuthenticateSCManager(scManagerAddress).authenticated(childNFTAddress);
+
+        return (authentic, maxActiveNum);
+    }
+
+    /**
+     * @notice used to append child NFT to main NFT
+     * @param   childNFTAddress     child NFT original smart contract address
+     * @param   parentId            id of the main NFT
+     * @param   childId             id of the child id in its original smart contract
+     */
+    function appendChild(address childNFTAddress, uint256 parentId, uint256 childId) internal {        
+        (bool authentic, uint256 maxActiveNum) = _authenticated(childNFTAddress);
+        Child memory child = Child({contractAddress: childNFTAddress, tokenId: childId});
+
+        // check if current child NFT address is authenticated
+        AppStorage storage s = LibAppStorage.diamondStorage();
+
+        if (authentic && s._activeChildrenAddressCount[parentId][childNFTAddress] < maxActiveNum) {
+            addToActiveChildren(child, parentId);
+        } else {
+            addToPendingChildren(child, parentId);
+        }
+    }
+
+    /**
+     * @notice Used to retrieve the pending child tokens of a given parent token.
+     * @dev Returns array of pending Child structs existing for given parent.
+     * @dev The Child struct consists of the following values:
+     *  [
+     *      tokenId,
+     *      contractAddress
+     *  ]
+     * @param parentId ID of the parent token for which to retrieve the pending child tokens
+     * @return struct[] An array of Child structs containing the parent token's pending child tokens
+     */
+    function pendingChildrenOf(uint256 parentId) internal view  returns (Child[] memory) {
+        AppStorage storage s = LibAppStorage.diamondStorage();
+        Child[] memory pendingChildren = s._pendingChildren[parentId];
+        return pendingChildren;
+    }
+
+    /**
+     * @notice  Used to add pending children
+     * @dev     check if maximal number of pending children is reach
+     * @param   child       the to-pending child instance
+     * @param   parentId    the parent id in current contract
+     */
+    function addToPendingChildren(Child memory child, uint256 parentId) internal {
+        uint256 length = pendingChildrenOf(parentId).length;
+
+        if (length < 128) {
+            AppStorage storage s = LibAppStorage.diamondStorage();
+            s._pendingChildren[parentId].push(child);
+        } else {
+            revert RMRKMaxPendingChildrenReached();
+        }
+        // Previous length matches the index for the new child
+        emit ChildProposed(parentId, length, child.contractAddress, child.tokenId);
+    }
+
+    /**
+     * @notice  Used to add active children
+     * @dev     check if maximal number of active children from this contract has reach
+     * @param   child       the to-appending child instance
+     * @param   parentId    the parent id in current contract
+     */
+    function addToActiveChildren(Child memory child, uint256 parentId) internal {
+        AppStorage storage s = LibAppStorage.diamondStorage();
+        address childAddress = child.contractAddress;
+        uint256 childId = child.tokenId;
+
+        require(s._childIsInActive[childAddress][childId] == 0, "child already exists");
+        
+        uint256 childIndex = s._activeChildren[parentId].length;
+        
+        s._activeChildren[parentId].push(child);
+        s._childIsInActive[childAddress][childId] = 1; // We use 1 as true
+        s._activeChildrenAddressCount[parentId][childAddress]++;
+
+        emit ChildAccepted(parentId, childIndex, childAddress, childId);
     }
 }

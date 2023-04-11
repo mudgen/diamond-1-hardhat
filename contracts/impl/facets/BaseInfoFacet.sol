@@ -30,4 +30,12 @@ contract BaseInfoFacet is Modifiers {
     function maxSupply() public view returns (uint256) {
         return s._maxSupply;
     }
+
+    /**
+     * @notice Used to get authenticate smart contract manager address
+     * @return The authenticate smart contract manager address
+     */
+    function authenticateSCManagerAddress() public view returns (address) {
+        return s._authenticateSCManager;
+    }
 }
