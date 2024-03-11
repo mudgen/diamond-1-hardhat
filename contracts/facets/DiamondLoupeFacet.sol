@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-/******************************************************************************\
-* Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
-* EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
-/******************************************************************************/
+//******************************************************************************\
+//* Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
+//* EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
+//******************************************************************************/
 
 // The functions in DiamondLoupeFacet MUST be added to a diamond.
 // The EIP-2535 Diamond standard requires these functions.
