@@ -1,0 +1,9 @@
+@startuml
+skinparam componentStyle rectangle
+User -> [Smart Wallet]
+cloud UserOperations{
+    [4337 Bundler]
+}
+[Smart Wallet] .> [4337 Bundler]
+[4337 Bundler] .> [Application]
+@enduml

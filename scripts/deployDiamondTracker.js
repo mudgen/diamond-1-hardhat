@@ -7,7 +7,7 @@ const ethers = hre.ethers;
 
 const { getSelectors, FacetCutAction } = require('./libraries/diamond.js')
 
-async function deployDiamond () {
+async function deployDiamondTracker (targetDiamond) {
   const accounts = await ethers.getSigners()
   const contractOwner = accounts[0]
 
@@ -23,9 +23,8 @@ async function deployDiamond () {
   console.log('')
   console.log('Deploying facets')
   const FacetNames = [
-    'DiamondCutFacet',
-    'DiamondLoupeFacet',
-    'OwnershipFacet'
+    'DiamondTrackerLoupeFacet',
+    // 'OwnershipFacet' -> target diamond
   ]
   // The `facetCuts` variable is the FacetCut[] that contains the functions to add during diamond deployment
   const facetCuts = []
@@ -48,26 +47,27 @@ async function deployDiamond () {
 
   // Setting arguments that will be used in the diamond constructor
   const diamondArgs = {
+    diamondTarget: targetDiamond,
     owner: contractOwner.address,
     init: diamondInit.address,
     initCalldata: functionCall
   }
 
   // deploy Diamond
-  const Diamond = await ethers.getContractFactory('Diamond')
-  const diamond = await Diamond.deploy(facetCuts, diamondArgs)
-  await diamond.deployed()
+  const DiamondTracker = await ethers.getContractFactory('DiamondTracker')
+  const diamondTracker = await DiamondTracker.deploy(facetCuts, diamondArgs)
+  await diamondTracker.deployed()
   console.log()
-  console.log('Diamond deployed:', diamond.address)
+  console.log('DiamondTracker deployed:', diamondTracker.address)
 
   // returning the address of the diamond
-  return diamond.address
+  return diamondTracker.address
 }
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 if (require.main === module) {
-  deployDiamond()
+  deployDiamondTracker(...process.argv.slice(2))
     .then(() => process.exit(0))
     .catch(error => {
       console.error(error)
@@ -75,4 +75,4 @@ if (require.main === module) {
     })
 }
 
-exports.deployDiamond = deployDiamond
+exports.deployDiamondTracker = deployDiamondTracker

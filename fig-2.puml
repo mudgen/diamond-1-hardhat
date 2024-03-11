@@ -1,0 +1,24 @@
+@startuml
+skinparam componentStyle rectangle
+package "Smart Wallet" {
+    database "User Storage" {
+    }
+
+    database "Vendor Storage" {
+    }
+
+    [Tracker] -> [Diamond Wallet]
+    [Diamond Wallet] ..> [Wallet Facets]
+    [Tracker] --> [User Storage]
+    [Diamond Wallet] --> [Vendor Storage]
+
+}
+cloud UserOperations{
+}
+
+User --> [Tracker]
+Vendor --> [Diamond Wallet]
+
+[Diamond Wallet] -> [UserOperations]
+
+@enduml
